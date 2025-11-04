@@ -126,7 +126,7 @@
   right: 16px;
   width: 60px;
   height: 60px;
-  background-color: rgb(94, 93, 112);
+  background-color: transparent;
   border: none;
   border-radius: 50%;
   display: flex;
@@ -230,7 +230,6 @@ const scriptURL = "https://script.google.com/macros/s/AKfycbxO-Pwjht3MbRVKj2BtzC
 
   // ฟังก์ชันดึงและแสดงข้อมูล
  async function fetchAndDisplayBookings() {
-  const bookingListDiv = document.getElementById("bookingList");
   bookingListDiv.innerHTML = "<p>กำลังโหลดข้อมูลการจอง...</p>";
 
   try {
@@ -239,18 +238,21 @@ const scriptURL = "https://script.google.com/macros/s/AKfycbxO-Pwjht3MbRVKj2BtzC
 
     if (result_Get.status === "success" && Array.isArray(result_Get.data) && result_Get.data.length > 0) {
       const html = result_Get.data.map(booking => {
-        const startTime = new Date(booking['เวลา_เริ่มใช้งาน']);
-        const dateStr = startTime.toLocaleDateString("th-TH", { dateStyle: 'medium' });
-        const timeStr = startTime.toLocaleTimeString("th-TH", { hour: '2-digit', minute: '2-digit' });
+        // ✅ ใช้ข้อมูลที่ได้จาก Apps Script โดยตรง
+        const dateStr = booking.dateStr || "-";
+        const startStr = booking.startTimeStr || "-";
+        const endStr = booking.endTimeStr || "-";
 
         return `
           <div class="booking-item">
-            <b>${booking['ชื่อ_-_นามสกุล']}</b> (${booking['รหัสนักศึกษา']})<br>
-            <small>${dateStr} เวลา ${timeStr} น.</small>
+            <b>${booking['Name']}</b> (${booking['Student ID']})<br>
+            <small>${dateStr} เวลา ${startStr} - ${endStr} น.</small>
           </div>
         `;
       }).join('');
+
       bookingListDiv.innerHTML = html;
+      console.log("Bookings loaded:", result_Get.data.length);
     } else {
       bookingListDiv.innerHTML = "<p>ยังไม่มีรายการจองในขณะนี้</p>";
     }
