@@ -180,12 +180,12 @@
         <div class="popup" id="popup">กำลังตรวจสอบ...</div>
         <h2><img src="https://upload.wikimedia.org/wikipedia/th/thumb/5/5f/ENG_CMU_Logo.svg/1200px-ENG_CMU_Logo.svg.png" alt="CMU Logo">ระบบจองห้อง</h2>
         <form id="bookingForm">
-          <label for="name">ชื่อ - นามสกุล</label>
+          <label for="name">[ชื่อ - นามสกุล]</label>
           <input type="text" id="name" required>
-          <label for="studentId">รหัสนักศึกษา</label>
+          <label for="studentId">[รหัสนักศึกษา]</label>
           <input type="text" id="studentId" required>
           <label for="time">เวลาเริ่มใช้งาน (เลือกรายชั่วโมง)</label>
-          <p class="note">*หมายเหตุ: อายุการจองแต่ละครั้ง 2 ชั่วโมง</p>
+          <p class="note">*หมายเหตุ: อายุการจองแต่ละครั้ง 1 ชั่วโมง</p>
           <input type="datetime-local" id="time" step="3600" required>
           <button type="submit" id="submitBtn">ยืนยันการจอง</button>
         </form>
@@ -242,19 +242,21 @@ const scriptURL = "https://script.google.com/macros/s/AKfycbxO-Pwjht3MbRVKj2BtzC
         const dateStr = booking.dateStr || "-";
         const startStr = booking.startTimeStr || "-";
         const endStr = booking.endTimeStr || "-";
+        //const password = booking.password || "-";
 
         return `
           <div class="booking-item">
-            <b>${booking['Name']}</b> (${booking['Student ID']})<br>
-            <small>${dateStr} เวลา ${startStr} - ${endStr} น.</small>
+            <b>${booking['Name']}</b> (ID: ${booking['Student ID']})<br>
+            <small>${dateStr} เวลา ${startStr} - ${endStr} น.</small> <br>
+            <small>รหัสผ่าน: <b>${booking['Password']}</b></small>
           </div>
         `;
       }).join('');
 
       bookingListDiv.innerHTML = html;
-      console.log("Bookings loaded:", result_Get.data.length);
+      console.log("Bookings loaded:", result_Get.data);
     } else {
-      bookingListDiv.innerHTML = "<p>ยังไม่มีรายการจองในขณะนี้</p>";
+      bookingListDiv.innerHTML = "<p>[ยังไม่มีรายการจองในขณะนี้]</p>";
     }
   } catch (error) {
     bookingListDiv.innerHTML = "<p>ไม่สามารถโหลดข้อมูลได้</p>";
