@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจองห้อง</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="https://upload.wikimedia.org/wikipedia/th/thumb/5/5f/ENG_CMU_Logo.svg/1200px-ENG_CMU_Logo.svg.png">
+
+  <style>
+    /* ... (โค้ด CSS ส่วน :root และ body.dark-mode เหมือนเดิม) ... */
+    :root {
+      --primary: #4f46e5; --primary-hover: #4338ca; --success: #22c55e; --error: #ef4444;
+      --bg-page: #f3f4f6; --bg-card: #ffffff; --bg-input: #f9fafb; --bg-popup: #1f2937;
+      --bg-popup-text: #f8fafc; --bg-result: #d1fae5; --text-header: #1f2937; --text-body: #1f2937;
+      --text-label: #6b7280; --text-result: #065f46; --border-color: #d1d5db;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+    body.dark-mode {
+      --bg-page: #1f2937; --bg-card: #111827; --bg-input: #1e293b; --bg-popup: #f8fafc;
+      --bg-popup-text: #1f2937; --bg-result: #064e3b; --text-header: #f8fafc; --text-body: #f8fafc;
+      --text-label: #cbd5e1; --text-result: #dcfce7; --border-color: #374151;
+      --shadow-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    /* --- CSS ที่แก้ไขและเพิ่มเติม --- */
+    body {
+      margin: 0; padding: 1rem; font-family: "Prompt", sans-serif; display: flex;
+      justify-content: center; align-items: center; min-height: 100vh;
+      background-color: var(--bg-page); color: var(--text-body);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* 1. สร้าง Container หลักสำหรับ 3D effect */
+    .flip-card-container {
+      width: 100%;
+      max-width: 450px;
+      height: 650px; /* กำหนดความสูงคงที่ */
+      perspective: 1000px; /* สร้างมิติ 3D */
+    }
+
+    .flip-card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.8s;
+    }
+
+    /* เพิ่มคลาส is-flipped เมื่อต้องการพลิก */
+    .flip-card.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .flip-card-front, .flip-card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      -webkit-backface-visibility: hidden; /* Safari */
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 2.5rem;
+      border-radius: 20px;
+      background-color: var(--bg-card);
+      box-shadow: 0 15px 35px var(--shadow-color);
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+    
+    .flip-card-back {
+      transform: rotateY(180deg);
+      align-items: center;
+    }
+    
+    /* ... (CSS อื่นๆ ที่ปรับปรุงเล็กน้อย) ... */
+    h2 { text-align: center; font-weight: 700; margin-bottom: 1.5rem; font-size: 1.5rem; color: var(--text-header); transition: color 0.3s; }
+    h2 img { width: 40px; vertical-align: middle; margin-right: 10px; }
+    label { display: block; margin-top: 1rem; margin-bottom: 0.3rem; font-weight: 500; font-size: 0.95rem; color: var(--text-label); transition: color 0.3s; }
+    .note { font-size: 0.85rem; color: var(--text-label); margin-top: -0.2rem; margin-bottom: 0.5rem; transition: color 0.3s; }
+    input { width: 100%; padding: 12px 15px; border-radius: 12px; border: 2px solid var(--border-color); background-color: var(--bg-input); color: var(--text-body); font-size: 1rem; font-family: "Prompt", sans-serif; transition: all 0.3s; }
+    input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2); }
+    body.dark-mode input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+    button, .action-button { width: 100%; padding: 14px; margin-top: 25px; border-radius: 12px; border: none; font-size: 1rem; font-weight: 600; cursor: pointer; background-color: var(--primary); color: #ffffff; transition: all 0.3s ease; text-align: center; }
+    button:hover:not(:disabled), .action-button:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(79, 70, 229, 0.3); }
+    button:disabled { cursor: not-allowed; opacity: 0.7; }
+    .result { margin-top: 20px; padding: 1rem; border-left: 5px solid var(--success); border-radius: 12px; display: none; animation: fadeIn 0.5s ease forwards; background-color: var(--bg-result); color: var(--text-result); transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+    .popup { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); padding: 8px 16px; border-radius: 10px; font-size: 0.9rem; display: none; animation: fadeInDown 0.3s ease; background-color: var(--bg-popup); color: var(--bg-popup-text); transition: background-color 0.3s, color 0.3s; }
+    .alert-box { position: fixed; top: 20px; right: 10px; padding: 1rem 1.5rem; border-radius: 12px; z-index: 1000; transform: translateX(120%); background-color: var(--bg-card); color: var(--text-body); border-left: 5px solid var(--error); box-shadow: 0 5px 18px var(--shadow-color); transition: transform 0.5s, background-color 0.3s, color 0.3s, border-color 0.3s; }
+    .alert-box.show { transform: translateX(0); } .alert-box.success { border-left-color: var(--success); }
+    @keyframes fadeIn { from {opacity:0; transform: translateY(10px);} to {opacity:1; transform: translateY(0);} } @keyframes fadeInDown { from {opacity:0; transform: translateY(-10px);} to {opacity:1; transform: translateY(0);} }
+
+    /* 2. สไตล์สำหรับด้านหลังการ์ด */
+    #bookingList {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      padding-right: 10px; /* กัน scrollbar ทับเนื้อหา */
+    }
+    .booking-item {
+      background-color: var(--bg-input);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid var(--primary);
+      font-size: 0.9rem;
+    }
+    .booking-item b {
+      color: var(--text-header);
+    }
+    
+    /* 3. ปุ่มสลับธีมและปุ่มพลิกการ์ด */
+    .theme-toggle { position: fixed; top: 20px; left: 20px; z-index: 999; }
+    .theme-toggle input { display: none; }
+    .toggle-label { display: flex; align-items: center; width: 60px; height: 30px; background-color: var(--border-color); border-radius: 50px; position: relative; cursor: pointer; transition: background-color 0.4s; }
+    .toggle-ball { width: 26px; height: 26px; background-color: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.4s, background-color 0.4s; box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+    input:checked + .toggle-label { background-color: var(--primary); }
+    input:checked + .toggle-label .toggle-ball { transform: translateX(30px); }
+    
+    /* ปุ่มพลิกการ์ด (ขวาบน) */
+/* ปุ่มพลิกการ์ด (ขวาบน) */
+.flip-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 60px;
+  height: 60px;
+  background-color: rgb(94, 93, 112);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.flip-button:hover {
+  background-color: rgba(79, 70, 229, 0.1);
+  transform: scale(1.1);
+}
+
+.flip-button svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--text-label);
+  pointer-events: none;
+  transition: stroke 0.3s;
+}
+
+.flip-button:hover svg {
+  stroke: var(--primary);
+}
+
+
+
+  </style>
+</head>
+<body>
+  
+  <div class="theme-toggle">
+    <input type="checkbox" id="toggleTheme">
+    <label for="toggleTheme" class="toggle-label">
+      <span class="toggle-ball"></span>
+    </label>
+  </div>
+
+  <div id="alertBox" class="alert-box"></div>
+
+  <div class="flip-card-container">
+    <div class="flip-card" id="flipCard">
+      
+      <div class="flip-card-front">
+        <button class="flip-button" id="viewBookingsBtn" title="ดูรายการจองทั้งหมด">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg>
+        </button>
+
+        <div class="popup" id="popup">กำลังตรวจสอบ...</div>
+        <h2><img src="https://upload.wikimedia.org/wikipedia/th/thumb/5/5f/ENG_CMU_Logo.svg/1200px-ENG_CMU_Logo.svg.png" alt="CMU Logo">ระบบจองห้อง</h2>
+        <form id="bookingForm">
+          <label for="name">ชื่อ - นามสกุล</label>
+          <input type="text" id="name" required>
+          <label for="studentId">รหัสนักศึกษา</label>
+          <input type="text" id="studentId" required>
+          <label for="time">เวลาเริ่มใช้งาน (เลือกรายชั่วโมง)</label>
+          <p class="note">*หมายเหตุ: อายุการจองแต่ละครั้ง 2 ชั่วโมง</p>
+          <input type="datetime-local" id="time" step="3600" required>
+          <button type="submit" id="submitBtn">ยืนยันการจอง</button>
+        </form>
+        <div class="result" id="resultBox"></div>
+      </div>
+
+      <div class="flip-card-back">
+        <button class="flip-button" id="backToFormBtn" title="กลับไปหน้าจอง">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
+        </button>
+        <h2>📋 รายการจองทั้งหมด</h2>
+        <div id="bookingList">
+          <p>กำลังโหลดข้อมูล...</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbxO-Pwjht3MbRVKj2BtzC2YkwDCZKYG1PNlq2ORQNPvVfUGD-UVXfHiqg019PbR4MFaXA/exec";
+  // --- JavaScript สำหรับสลับธีม (เหมือนเดิม) ---
+
+  const toggle = document.getElementById("toggleTheme");
+  const body = document.body;
+  function setTheme(isDark) {
+    body.classList.toggle("dark-mode", isDark);
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+    toggle.checked = isDark;
+  }
+  toggle.addEventListener("change", (e) => setTheme(e.target.checked));
+  (function initTheme() {
+    const savedTheme = localStorage.getItem("theme");
+    setTheme(savedTheme ? savedTheme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches);
+  })();
+
+  // --- JavaScript ใหม่สำหรับ Flip Card และดึงข้อมูล ---
+  const flipCard = document.getElementById("flipCard");
+  const viewBookingsBtn = document.getElementById("viewBookingsBtn");
+  const backToFormBtn = document.getElementById("backToFormBtn");
+  const bookingListDiv = document.getElementById("bookingList");
+
+  // ฟังก์ชันดึงและแสดงข้อมูล
+ async function fetchAndDisplayBookings() {
+  const bookingListDiv = document.getElementById("bookingList");
+  bookingListDiv.innerHTML = "<p>กำลังโหลดข้อมูลการจอง...</p>";
+
+  try {
+    const response = await fetch(scriptURL);
+    const result_Get = await response.json();
+
+    if (result_Get.status === "success" && Array.isArray(result_Get.data) && result_Get.data.length > 0) {
+      const html = result_Get.data.map(booking => {
+        const startTime = new Date(booking['เวลา_เริ่มใช้งาน']);
+        const dateStr = startTime.toLocaleDateString("th-TH", { dateStyle: 'medium' });
+        const timeStr = startTime.toLocaleTimeString("th-TH", { hour: '2-digit', minute: '2-digit' });
+
+        return `
+          <div class="booking-item">
+            <b>${booking['ชื่อ_-_นามสกุล']}</b> (${booking['รหัสนักศึกษา']})<br>
+            <small>${dateStr} เวลา ${timeStr} น.</small>
+          </div>
+        `;
+      }).join('');
+      bookingListDiv.innerHTML = html;
+    } else {
+      bookingListDiv.innerHTML = "<p>ยังไม่มีรายการจองในขณะนี้</p>";
+    }
+  } catch (error) {
+    bookingListDiv.innerHTML = "<p>ไม่สามารถโหลดข้อมูลได้</p>";
+    console.error("Error fetching bookings:", error);
+  }
+}
+
+  // Event Listeners สำหรับปุ่มพลิก
+  viewBookingsBtn.addEventListener("click", () => {
+    flipCard.classList.add("is-flipped");
+    fetchAndDisplayBookings(); // ดึงข้อมูลเมื่อพลิกไปด้านหลัง
+  });
+
+  backToFormBtn.addEventListener("click", () => {
+    flipCard.classList.remove("is-flipped");
+  });
+
+  // --- Booking Script (เหมือนเดิม) ---
+  
+  const form = document.getElementById("bookingForm");
+  const timeInput = document.getElementById("time");
+  const btn = document.getElementById("submitBtn");
+  const resultBox = document.getElementById("resultBox");
+  const popup = document.getElementById("popup");
+  const alertBox = document.getElementById("alertBox");
+
+  let alertTimeout;
+  function showAlert(message, isSuccess = false) {
+    clearTimeout(alertTimeout);
+    alertBox.textContent = message;
+    alertBox.className = "alert-box show";
+    if (isSuccess) alertBox.classList.add("success");
+    alertTimeout = setTimeout(() => { alertBox.classList.remove("show"); }, 4000);
+  }
+
+  timeInput.addEventListener("change", () => {
+    const t = new Date(timeInput.value);
+    t.setMinutes(0, 0, 0);
+    const y = t.getFullYear();
+    const m = String(t.getMonth() + 1).padStart(2, "0");
+    const d = String(t.getDate()).padStart(2, "0");
+    const h = String(t.getHours()).padStart(2, "0");
+    timeInput.value = `${y}-${m}-${d}T${h}:00`;
+  });
+
+ form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  btn.disabled = true;
+  popup.style.display = "block";
+  resultBox.style.display = "none";
+
+  const name = document.getElementById("name").value;
+  const studentId = document.getElementById("studentId").value;
+  const time = document.getElementById("time").value;
+  const password = Math.floor(1000 + Math.random() * 9000);
+
+  // ✅ ใช้ URLSearchParams แทน JSON
+  const formData = new URLSearchParams({ name, studentId, time, password });
+
+  try {
+    const res = await fetch(scriptURL, {
+      method: "POST",
+      body: formData
+    });
+
+    const result = await res.json();
+    popup.style.display = "none";
+
+    if (result.status === "duplicate") {
+      showAlert("❌ ไม่สามารถจองได้: เวลานี้ถูกจองไปแล้ว");
+      btn.disabled = false;
+      return;
+    }
+    if (result.status === "success") {
+      const startTime = new Date(time);
+      const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
+      resultBox.style.display = "block";
+      resultBox.innerHTML = `
+        <strong>✅ การจองสำเร็จ!</strong><br><br>
+        ชื่อผู้จอง: <b>${name}</b><br>รหัสนักศึกษา: <b>${studentId}</b><br>
+        เวลาเริ่ม: <b>${startTime.toLocaleString("th-TH", { dateStyle: 'short', timeStyle: 'short' })} น.</b><br>
+        สิ้นสุด: <b>${endTime.toLocaleString("th-TH", { dateStyle: 'short', timeStyle: 'short' })} น.</b><br><br>
+        <span style="font-size:1.1rem;">🔑 รหัสผ่าน: <b>${password}</b></span>
+      `;
+      form.reset();
+    }
+  } catch (err) {
+    popup.style.display = "none";
+    showAlert("🚫 เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    console.error(err);
+  }
+
+  setTimeout(() => { btn.disabled = false; }, 3000);
+});
+
+
+</script>
+</body>
+</html>
