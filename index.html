@@ -137,9 +137,9 @@
           <label for="room">เลือกห้อง</label>
           <select id="room" required>
             <option value="" disabled selected>-- เลือกห้อง --</option>
-            <option value="ห้อง 1">ห้อง 1</option>
-            <option value="ห้อง 2">ห้อง 2</option>
-            <option value="ห้อง 3">ห้อง 3</option>
+            <option value="Room 1">Room 1</option>
+            <option value="Room 2">Room 2</option>
+            <option value="Room 3">Room 3</option>
           </select>
 
           <label for="name">ชื่อ - นามสกุล</label>
@@ -168,6 +168,7 @@
         <h2>📋 รายการจองทั้งหมด</h2>
         <div id="bookingList"><p>กำลังโหลดข้อมูล...</p></div>
       </div>
+      
 
     </div>
   </div>
@@ -257,16 +258,17 @@ form.addEventListener("submit", async (e) => {
   name,
   studentId,
   room,
-  time: `${date}T${time}`,
+  time: timeString,
   password
 });
   try {
     const res = await fetch(scriptURL, { method: "POST", body: formData });
     const result = await res.json();
+    //console.log(formData.toString());
     popup.style.display = "none";
 
     if (result.status === "duplicate") {
-      showAlert("❌ ไม่สามารถจองได้: เวลานี้ถูกจองไปแล้ว");
+      showAlert(`🚫 ${result.message}`);
       btn.disabled = false;
       return;
     }
@@ -285,7 +287,7 @@ form.addEventListener("submit", async (e) => {
     }
   } catch (err) {
     popup.style.display = "none";
-      showAlert("🚫 เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    showAlert("🚫 เกิดข้อผิดพลาดในการเชื่อมต่อ");
   }
   setTimeout(() => btn.disabled = false, 2500);
 });
