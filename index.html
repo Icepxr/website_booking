@@ -126,7 +126,7 @@
     <div class="flip-card" id="flipCard">
       
       <div class="flip-card-front">
-        <button class="flip-button" id="viewBookingsBtn" title="ดูรายการจองทั้งหมด">
+        <button class="flip-button" id="viewAvailableBtn" title="ตรวจสอบเวลาว่างของห้อง ">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg>
         </button>
 
@@ -165,7 +165,7 @@
         <button class="flip-button" id="backToFormBtn" title="กลับไปหน้าจอง">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
         </button>
-        <h2>📋 รายการจองทั้งหมด</h2>
+        <h2>📋 เวลาและห้องที่สามารถจอง</h2>
         <div id="bookingList"><p>กำลังโหลดข้อมูล...</p></div>
       </div>
       
@@ -194,7 +194,7 @@ const viewBookingsBtn = document.getElementById("viewBookingsBtn");
 const backToFormBtn = document.getElementById("backToFormBtn");
 const bookingListDiv = document.getElementById("bookingList");
 
-async function fetchAndDisplayBookings() {
+/*async function fetchAndDisplayBookings() {
   bookingListDiv.innerHTML = "<p>กำลังโหลดข้อมูลการจอง...</p>";
   try {
     const response = await fetch(scriptURL);
@@ -213,8 +213,49 @@ async function fetchAndDisplayBookings() {
   } catch (e) {
     bookingListDiv.innerHTML = "<p>ไม่สามารถโหลดข้อมูลได้</p>";
   }
+}*/
+async function fetchAndDisplayAvailability() {
+  const today = new Date().toISOString().split("T")[0]; // วันที่ปัจจุบัน
+  bookingListDiv.innerHTML = "<p>⏳ กำลังตรวจสอบเวลาว่าง...</p>";
+
+  try {
+    const response = await fetch(`${scriptURL}?action=checkAvailableRooms&date=${today}`);
+    const result = await response.json();
+    console.log("Available slots for",  result.availability);
+
+
+    if (result.status === "success" && result.availability.length > 0) {
+      let html = `<h3 style="text-align:center">🗓 วันที่ ${result.date}</h3>`;
+      result.availability.forEach(roomData => {
+        html += `<div class="booking-item">
+          <b>${roomData.room}</b><br>`;
+        if (roomData.freeSlots.length > 0) {
+          html += roomData.freeSlots.map(slot => 
+            `🕓 ${slot.start} - ${slot.end}<br>`
+          ).join('');
+        } else {
+          html += `<span style="color:var(--error)">❌ ไม่มีเวลาว่าง</span>`;
+        }
+        html += "</div>";
+      });
+      bookingListDiv.innerHTML = html;
+    } else {
+      bookingListDiv.innerHTML = "<p>❌ ไม่มีข้อมูลเวลาว่างในวันนี้</p>";
+    }
+  } catch (e) {
+    bookingListDiv.innerHTML = "<p>🚫 ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้</p>";
+    console.error("Error:", e);
+  }
 }
-viewBookingsBtn.addEventListener("click", () => { flipCard.classList.add("is-flipped"); fetchAndDisplayBookings(); });
+
+const viewAvailableBtn = document.getElementById("viewAvailableBtn");
+
+viewAvailableBtn.addEventListener("click", () => {
+  flipCard.classList.add("is-flipped");
+  fetchAndDisplayAvailability();
+});
+
+
 backToFormBtn.addEventListener("click", () => flipCard.classList.remove("is-flipped"));
 
 const form = document.getElementById("bookingForm");
