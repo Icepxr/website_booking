@@ -221,11 +221,12 @@ async function fetchAndDisplayAvailability() {
   try {
     const response = await fetch(`${scriptURL}?action=checkAvailableRooms&date=${today}`);
     const result = await response.json();
-    console.log("Available slots for",  result.availability);
+    console.log("Available slots for",  result);
 
 
     if (result.status === "success" && result.availability.length > 0) {
-      let html = `<h3 style="text-align:center">🗓 วันที่ ${result.date}</h3>`;
+      let [year, month, day] = result.date.split("-");
+      let html = `<h3 style="text-align:center">🗓 วันที่ ${day}-${month}-${year}</h3>`;
       result.availability.forEach(roomData => {
         html += `<div class="booking-item">
           <b>${roomData.room}</b><br>`;
